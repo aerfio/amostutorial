@@ -32,10 +32,10 @@
           # rustToolchain = pkgs.pkgsBuildHost.rust-bin.stable."1.71.0".default;
           rustToolchain = pkgs.pkgsBuildHost.rust-bin.stable.latest.default;
             # new! 👇
-          nativeBuildInputs = with pkgs; [ rustToolchain pkg-config ];
+          nativeBuildInputs = with pkgs; [ rustToolchain pkg-config ] ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.SystemConfiguration ];
           # also new! 👇
-          # buildInputs = with pkgs; [] ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.SystemConfiguration ]; #TODO fix me
-          buildInputs = with pkgs; [ darwin.apple_sdk.frameworks.SystemConfiguration ];
+          buildInputs = with pkgs; [];
+          # buildInputs = with pkgs; [ darwin.apple_sdk.frameworks.SystemConfiguration ];
           # this is how we can tell crane to use our toolchain!
           craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
           # cf. https://crane.dev/API.html#libcleancargosource
