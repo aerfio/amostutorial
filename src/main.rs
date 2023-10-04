@@ -1,3 +1,4 @@
+use axum::extract::State;
 use axum::{
     body::BoxBody,
     http::header,
@@ -5,11 +6,16 @@ use axum::{
     routing::get,
     Router,
 };
-use reqwest::StatusCode;
+use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 use std::str::FromStr;
 use tracing::{info, Level};
 use tracing_subscriber::{filter::Targets, layer::SubscriberExt, util::SubscriberInitExt};
+
+#[derive(Clone)]
+struct ServerState {
+    client: reqwest::Client,
+}
 
 #[tokio::main]
 async fn main() {
@@ -22,7 +28,11 @@ async fn main() {
         .with(filter)
         .init();
 
-    let app = Router::new().route("/", get(root_get));
+    let app = Router::new()
+        .route("/", get(root_get))
+        .with_state(ServerState {
+            client: Default::default(),
+        });
 
     let addr = "0.0.0.0:8080".parse().unwrap();
     info!("Listening on {addr}");
@@ -32,8 +42,8 @@ async fn main() {
         .unwrap();
 }
 
-async fn root_get() -> Response<BoxBody> {
-    match get_cat_ascii_art().await {
+async fn root_get(state: State<ServerState>) -> Response<BoxBody> {
+    match get_cat_ascii_art(&state.client).await {
         Ok(art) => (
             StatusCode::OK,
             [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
@@ -47,14 +57,14 @@ async fn root_get() -> Response<BoxBody> {
     }
 }
 
-async fn get_cat_ascii_art() -> color_eyre::Result<String> {
+async fn get_cat_ascii_art(client: &reqwest::Client) -> color_eyre::Result<String> {
     #[derive(Deserialize)]
     struct CatImage {
         url: String,
     }
 
     let api_url = "https://api.thecatapi.com/v1/images/search";
-    let client = reqwest::Client::default();
+    // let client = reqwest::Client::default();
 
     let image = client
         .get(api_url)
