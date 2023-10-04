@@ -1,0 +1,12 @@
+# syntax = docker/dockerfile:1
+
+FROM nixos/nix:2.18.1
+
+# Copy sources and build them
+WORKDIR /app
+COPY src src
+COPY Cargo.toml Cargo.lock flake.lock flake.nix ./
+
+RUN nix build --extra-experimental-features nix-command --extra-experimental-features flakes
+
+CMD ["/app/result"]
