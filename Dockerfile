@@ -1,6 +1,9 @@
 # syntax = docker/dockerfile:1
 
-FROM ubuntu:22.04
+
+FROM ubuntu:22.04 AS base
+
+FROM base AS builder
 
 # Install curl
 RUN set -eux; \
@@ -33,5 +36,25 @@ RUN --mount=type=cache,target=/root/.rustup \
 		set -eux; \
 		cargo build --release; \
 		cp target/release/amostutorial .
+
+FROM base AS app
+
+SHELL ["/bin/bash", "-c"]
+
+# Install run-time dependencies, remove extra APT files afterwards.
+# This must be done in the same `RUN` command, otherwise it doesn't help
+# to reduce the image size.
+RUN set -eux; \
+		apt update; \
+		apt install -y --no-install-recommends \
+			ca-certificates \
+			; \
+		apt clean autoclean; \
+		apt autoremove --yes; \
+		rm -rf /var/lib/{apt,dpkg,cache,log}/
+
+# Copy app from builder
+WORKDIR /app
+COPY --from=builder /app/amostutorial .
 
 CMD ["/app/amostutorial"]

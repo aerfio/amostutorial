@@ -35,8 +35,8 @@ async fn main() {
         });
 
     let quit_sig = async {
-        warn!("Initiating graceful shutdown");
         _ = tokio::signal::ctrl_c().await;
+        warn!("Initiating graceful shutdown");
     };
 
     let addr = "0.0.0.0:8080".parse().unwrap();

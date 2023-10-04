@@ -16,3 +16,6 @@ serde = { version = "1", features = ["derive"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3", features = ["json"] }
+
+[profile.release]
+lto = true # Enable link-time optimization
