@@ -6,10 +6,10 @@ use axum::{
     routing::get,
     Router,
 };
-use reqwest::{Client, StatusCode};
+use reqwest::StatusCode;
 use serde::Deserialize;
 use std::str::FromStr;
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::{filter::Targets, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
@@ -34,10 +34,16 @@ async fn main() {
             client: Default::default(),
         });
 
+    let quit_sig = async {
+        warn!("Initiating graceful shutdown");
+        _ = tokio::signal::ctrl_c().await;
+    };
+
     let addr = "0.0.0.0:8080".parse().unwrap();
     info!("Listening on {addr}");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
+        .with_graceful_shutdown(quit_sig)
         .await
         .unwrap();
 }
